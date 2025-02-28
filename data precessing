@@ -1,1 +1,21 @@
+###Description of pre filled data
+##Fig. S2
+library(readxl)
+library(dplyr)
+library(VIM)
+data = read_excel("raw_data.xlsx")
 
+missing_data = select(data,Smoker,Hear_protection,Total_energy,VitaminA,
+                      VitaminE,VitaminB12,VitaminC,Calcium_intake,Magnesium_intake,
+                      LBXBPB,LBXTHG,LBXBCD,Diabetes,PIR,BMI,hypertention,URXUMO,
+                      URXUBA,URXUCO,URXUCS,URXUSB,URXUTL,URXUTU)
+
+windows()
+mice_plot <- aggr(missing_data,                         
+                  col = c('#f5deb3', '#ef8080'), 
+                  numbers = TRUE,             
+                  sortVars = TRUE,            
+                  labels = names(missing_data),         
+                  cex.axis = 0.7,             
+                  gap = 5                    
+)                  
