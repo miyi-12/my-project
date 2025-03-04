@@ -1,0 +1,74 @@
+###Support Vector Machine
+
+library(e1071)
+library(caret)
+library(rpart)
+library(caTools)
+library(dplyr)
+
+data = read.csv("ml_data.csv")
+varsToFactor = c("gender","race","hypertention",
+                 "Noise_exposure",
+                 "Diabetes")
+data[varsToFactor] = lapply(data[varsToFactor], factor)
+quantitative_columns = c("age","Total_energy","BMI",
+                         "VitaminA","VitaminE","Calcium_intake","Magnesium_intake",
+                         "blood_PB","urine_TL","urine_CS","urine_BA","urine_MO","urine_CO","urine_SB","urine_AS")
+data[quantitative_columns] = scale(data[quantitative_columns])
+data$HL = as.factor(data$HL)
+split = createDataPartition(data$HL, p = 0.7, list = FALSE)
+
+trainData = data[split, ]
+testData = data[-split, ]
+
+tuned_model = tune.svm(HL ~ ., data = trainData, trControl = control,cost = 10^(-1:3),gamma = 10^(-3:1),  tunecontrol=tune.control(sampling = "bootstrap",  nboot = 100))
+print(tuned_model)
+train_x = trainData[,-21]
+train_y = trainData[,21]
+form_xy = as.formula(paste0("HL~",paste(colnames(train_x),collapse = "+")))
+
+svm_model_initial_final = svm(form_xy,data = trainData,
+                               probability = T, kernel="radial",   
+                               gamma=1,cost=10)
+
+svm_class = predict(svm_model_initial_final,newdata = testData,probability = T)
+train_prob = attr(svm_predictions, "probabilities")[,2]
+
+roc_result = roc(testData$HL, train_prob)
+roc_result
+####Fig. S5B
+windows()
+plot.roc(testData$HL,train_prob,percent=TRUE,col="#1c61b6",print.auc=TRUE,
+         main = "Area under the curve for SVM")
+
+confusionMatrix(svm_class, testData$HL,positive = "1")
+confusionMatrix(svm_class, testData$HL,positive = "1")$byClass
+
+library(PRROC)
+
+true_labels <- testData$HL
+svm_predictions
+pr <- pr.curve(scores.class0 = svm_class[true_labels == 1],  
+               scores.class1 = svm_class[true_labels == 0],  
+               curve = TRUE)
+pr
+pr_auc = pr$auc.integral
+##Fig. 6B
+windows()
+plot(pr, 
+     main = paste("PR Curve for SVM (PR-AUC =", round(pr_auc,2), ")"),
+     xlab = "Recall", 
+     ylab = "Precision", 
+     col = "#1c61b6", 
+     lwd = 2)
+
+
+
+
+
+
+
+
+
+
+
