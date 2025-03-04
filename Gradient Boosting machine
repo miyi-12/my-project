@@ -1,0 +1,83 @@
+###Gradient Boosting machine
+
+library(gbm)
+library(caret)
+library(rpart)
+library(caTools)
+library(dplyr)
+
+data = read.csv("ml_data.csv")
+varsToFactor = c("gender","race","hypertention",
+                 "Noise_exposure",
+                 "Diabetes")
+data[varsToFactor] = lapply(data[varsToFactor], factor)
+quantitative_columns = c("age","Total_energy","BMI",
+                         "VitaminA","VitaminE","Calcium_intake","Magnesium_intake",
+                         "blood_PB","urine_TL","urine_CS","urine_BA","urine_MO","urine_CO","urine_SB","urine_AS")
+data[quantitative_columns] = scale(data[quantitative_columns])
+data$HL = as.factor(data$HL)
+split = createDataPartition(data$HL, p = 0.7, list = FALSE)
+
+trainData = data[split, ]
+testData = data[-split, ]
+
+control = trainControl(method = "cv", number = 10)
+ab_model = train(HL ~ .,
+                  data = trainData,
+                  method = "gbm",
+                  trControl = control)
+ab_model
+
+fit_1 <- gbm(HL~.,
+             data = trainData,
+             verbose = TRUE,
+             shrinkage = 0.1,
+             interaction.depth = 3,
+             n.minobsinnode = 10,
+             n.trees = 50)
+predictions_prob = predict(fit_1, newdata = testData, type = "response")
+
+
+library(pROC)
+roc_r = roc(testData$HL, predictions_prob)
+roc_r
+######Fig. S5F
+windows()
+plot.roc(testData$HL, predictions_prob,percent=TRUE,col="#1c61b6",print.auc=TRUE,
+         main = "Area under the curve for GBM")
+
+abg_predictions= ifelse(predictions_prob > 0.5, 1, 0)
+abg_predictions = as.factor(abg_predictions)
+confusionMatrix(abg_predictions, testData$HL,positive = "1")
+confusionMatrix(abg_predictions, testData$HL,positive = "1")$byClass
+
+library(PRROC)
+true_labels = testData$HL
+pr = pr.curve(scores.class0 = abg_predictions[true_labels == "1"],  
+               scores.class1 = abg_predictions[true_labels == "0"],  
+               curve = TRUE)
+pr
+pr_auc = pr$auc.integral
+######Fig. S6F
+windows()
+plot(pr, 
+     main = paste("PR Curve for GBM (PR-AUC =", round(pr_auc,2), ")"),
+     xlab = "Recall", 
+     ylab = "Precision", 
+     col = "#1c61b6", 
+     lwd = 2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
