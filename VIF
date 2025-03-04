@@ -1,0 +1,30 @@
+##VIF
+library(readxl)
+library(dplyr)
+library(caret)
+data = read_excel("imputed_data.xlsx")
+data = select(data,-X)
+quantitative_columns <- c("age","BMI","Total_energy",
+                          "VitaminA","VitaminE",
+                          "Calcium_intake","Magnesium_intake"
+                          )
+data[quantitative_columns] <- scale(data[quantitative_columns])
+data$log_AS <- log(data$AS)
+data$log_Ba <- log(data$URXUBA)
+data$log_Co <- log(data$URXUCO)
+data$log_Cs <- log(data$URXUCS)
+data$log_Mo <- log(data$URXUMO)
+data$log_Sb <- log(data$URXUSB)
+data$log_Tl <- log(data$URXUTL)
+data$log_Pb <- log(data$LBXBPB)
+varsToFactor <- c("gender","race","hypertention",
+                  "Noise_exposure","Diabetes")
+data[varsToFactor] <- lapply(data[varsToFactor], factor)
+data$HL = as.factor(data$HL)
+model <- glm(HL~log_Pb+log_Tl+log_Cs+log_Ba+log_Mo+log_Co+log_Sb+log_AS+gender
+             +age+race+BMI+hypertention+Noise_exposure+Diabetes+Total_energy+VitaminA+
+               VitaminE+Calcium_intake+Magnesium_intake, data = data,family = binomial())
+library(car)
+vif_values <- vif(model)
+print(vif_values)
+write.csv(vif_values,file = "vif.csv")
