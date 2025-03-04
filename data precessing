@@ -3,9 +3,9 @@
 library(readxl)
 library(dplyr)
 library(VIM)
-data = read_excel("raw_data.xlsx")
+raw_data = read_excel("raw_data.xlsx")
 
-missing_data = select(data,Smoker,Hear_protection,Total_energy,VitaminA,
+missing_data = select(raw_data,Smoker,Hear_protection,Total_energy,VitaminA,
                       VitaminE,VitaminB12,VitaminC,Calcium_intake,Magnesium_intake,
                       LBXBPB,LBXTHG,LBXBCD,Diabetes,PIR,BMI,hypertention,URXUMO,
                       URXUBA,URXUCO,URXUCS,URXUSB,URXUTL,URXUTU)
@@ -19,3 +19,181 @@ mice_plot <- aggr(missing_data,
                   cex.axis = 0.7,             
                   gap = 5                    
 )                  
+
+
+##Fill in MICE with raw data
+library(readxl)
+library(mice)
+library(ggplot2)
+library(ggmice)
+library(dplyr)
+data = select(data,-SEQN)
+
+raw_data = read_excel("raw_data.xlsx")
+imputed = mice(raw_data, m = 5, method = "pmm")
+imputed_data = complete(imputed)
+
+##histograms to show the distribution of variables before and after imputation
+
+##Fig.S3
+
+##PIR
+##before imputation
+hist(raw_data$PIR, main="Histogram of PIR", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$PIR, main="Histogram of PIR (Imputed)", xlab="Value", col="green")
+
+##BMI
+##before imputation
+hist(raw_data$BMI, main="Histogram of BMI", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$BMI, main="Histogram of BMI (Imputed)", xlab="Value", col="green")
+
+##BMI
+##before imputation
+hist(raw_data$BMI, main="Histogram of BMI", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$BMI, main="Histogram of BMI (Imputed)", xlab="Value", col="green")
+
+##hypertention
+##before imputation
+hist(raw_data$hypertention, main="Histogram of hypertention", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$hypertention, main="Histogram of hypertention (Imputed)", xlab="Value", col="green")
+
+##Hear protection
+##before imputation
+hist(raw_data$Hear_protection, main="Histogram of Hear protection", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$Hear_protection, main="Histogram of  Hear protection (Imputed)", xlab="Value", col="green")
+
+## Diabetes
+##before imputation
+hist(raw_data$Diabetes, main="Histogram of Diabetes", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$Diabetes, main="Histogram of  Diabetes (Imputed)", xlab="Value", col="green")
+
+##Smoker
+##before imputation
+hist(raw_data$Smoker, main="Histogram of smoking", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$Smoker, main="Histogram of  smoking (Imputed)", xlab="Value", col="green")
+
+##Total energy
+##before imputation
+hist(raw_data$Total_energy, main="Histogram of Total energy", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$Total_energy, main="Histogram of Total energy (Imputed)", xlab="Value", col="green")
+
+
+##VitaminA
+##before imputation
+hist(raw_data$VitaminA, main="Histogram of VitaminA", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$VitaminA, main="Histogram of VitaminA (Imputed)", xlab="Value", col="green")
+
+##VitaminE
+##before imputation
+hist(raw_data$VitaminE, main="Histogram of Vitamin E", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$VitaminE, main="Histogram of Vitamin E (Imputed)", xlab="Value", col="green")
+
+##VitaminB12
+##before imputation
+hist(raw_data$VitaminB12, main="Histogram of Vitamin B12", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$VitaminB12, main="Histogram of Vitamin B12 (Imputed)", xlab="Value", col="green")
+
+##VitaminC
+##before imputation
+hist(raw_data$VitaminC, main="Histogram of Vitamin C", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$VitaminC, main="Histogram of Vitamin C (Imputed)", xlab="Value", col="green")
+
+
+##Calcium_intake
+##before imputation
+hist(raw_data$Calcium_intake, main="Histogram of Calcium intake", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$Calcium_intake, main="Histogram of Calcium intake (Imputed)", xlab="Value", col="green")
+
+##Magnesium_intake
+##before imputation
+hist(raw_data$Magnesium_intake, main="Histogram of Magnesium intake", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$Magnesium_intake, main="Histogram of Magnesium intake (Imputed)", xlab="Value", col="green")
+
+
+##urine Ba
+##before imputation
+hist(raw_data$URXUBA, main="Histogram of urine Ba", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$URXUBA, main="Histogram of urine Ba (Imputed)", xlab="Value", col="green")
+
+##urine Co
+##before imputation
+hist(raw_data$URXUCO, main="Histogram of urine Co", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$URXUCO, main="Histogram of urine Co (Imputed)", xlab="Value", col="green")
+
+
+##urine Cs
+##before imputation
+hist(raw_data$URXUCS, main="Histogram of urine Cs", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$URXUCS, main="Histogram of urine Cs (Imputed)", xlab="Value", col="green")
+
+
+##urine Mo
+##before imputation
+hist(raw_data$URXUMO, main="Histogram of urine Mo", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$URXUMO, main="Histogram of urine Mo (Imputed)", xlab="Value", col="green")
+
+##urine Sb
+##before imputation
+hist(raw_data$URXUSB, main="Histogram of urine Sb", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$URXUSB, main="Histogram of urine Sb (Imputed)", xlab="Value", col="green")
+
+##urine Tl
+##before imputation
+hist(raw_data$URXUTL, main="Histogram of urine Tl", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$URXUTL, main="Histogram of urine Tl (Imputed)", xlab="Value", col="green")
+
+
+##urine Tu
+##before imputation
+hist(raw_data$URXUTU, main="Histogram of urine Tu", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$URXUTU, main="Histogram of urine Tu (Imputed)", xlab="Value", col="green")
+
+##blood Cd
+##before imputation
+hist(raw_data$LBXBCD, main="Histogram of blood Cd", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$LBXBCD, main="Histogram of blood Cd (Imputed)", xlab="Value", col="green")
+
+
+##blood Pb
+##before imputation
+hist(raw_data$LBXBPB, main="Histogram of blood Pb", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$LBXBPB, main="Histogram of blood Pb (Imputed)", xlab="Value", col="green")
+
+
+##blood total Hg
+##before imputation
+hist(raw_data$LBXTHG, main="Histogram of blood total Hg", xlab="Value", col="blue")
+##after imputation
+hist(imputed_data$LBXTHG, main="Histogram of blood total Hg (Imputed)", xlab="Value", col="green")
+
+
+
+
+
+
+
+
+
