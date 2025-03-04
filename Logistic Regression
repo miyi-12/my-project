@@ -1,0 +1,61 @@
+##ML models
+
+library(caret)
+library(rpart)
+library(caTools)
+library(dplyr)
+
+data = read.csv("ml_data.csv")
+varsToFactor = c("gender","race","hypertention",
+                  "Noise_exposure",
+                  "Diabetes")
+data[varsToFactor] = lapply(data[varsToFactor], factor)
+quantitative_columns = c("age","Total_energy","BMI",
+                          "VitaminA","VitaminE","Calcium_intake","Magnesium_intake",
+                          "blood_PB","urine_TL","urine_CS","urine_BA","urine_MO","urine_CO","urine_SB","urine_AS")
+data[quantitative_columns] = scale(data[quantitative_columns])
+data$HL = as.factor(data$HL)
+split = createDataPartition(data$HL, p = 0.7, list = FALSE)
+
+trainData = data[split, ]
+testData = data[-split, ]
+
+###Logistic Regression
+set.seed(123) 
+control = trainControl(method = "cv", number = 10)
+model_LR = train(HL ~ ., data = trainData, method = "glm", family = "binomial", trControl = control)
+model_LR
+prob_predictions = predict(model_LR, newdata = testData, type = "prob")[,2]
+class_predictions = predict(model_LR, newdata = testData, type = "raw")
+
+library(pROC)
+roc_result = roc(testData$HL, prob_predictions)
+roc_result
+##Fig. S5A
+windows()
+plot.roc(testData$HL,prob_predictions,percent=TRUE,col="#1c61b6",print.auc=TRUE,
+         main = "Area under the curve for Logistic Regression")
+
+confusionMatrix(class_predictions, testData$HL,positive = "1")$byClass
+table(class_predictions)
+
+library(PRROC)
+true_labels = testData$HL
+pr <- pr.curve(scores.class0 = class_predictions[true_labels == 1],  
+               scores.class1 = class_predictions[true_labels == 0],  
+               curve = TRUE)
+pr
+pr_auc = pr$auc.integral
+##Fig. 6A
+windows()
+plot(pr, 
+     main = paste("PR Curve for Logistic Regression (PR-AUC =", round(pr_auc,2), ")"),
+     xlab = "Recall", 
+     ylab = "Precision", 
+     col = "#1c61b6", 
+     lwd = 2)
+
+
+
+
+
