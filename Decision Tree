@@ -1,0 +1,82 @@
+###Decision Tree
+
+
+library(caret)
+library(rpart)
+library(caTools)
+library(dplyr)
+
+data = read.csv("ml_data.csv")
+varsToFactor = c("gender","race","hypertention",
+                 "Noise_exposure",
+                 "Diabetes")
+data[varsToFactor] = lapply(data[varsToFactor], factor)
+quantitative_columns = c("age","Total_energy","BMI",
+                         "VitaminA","VitaminE","Calcium_intake","Magnesium_intake",
+                         "blood_PB","urine_TL","urine_CS","urine_BA","urine_MO","urine_CO","urine_SB","urine_AS")
+data[quantitative_columns] = scale(data[quantitative_columns])
+data$HL = ifelse(data$HL == 0,"no","yes")
+
+data$HL = as.factor(data$HL)
+split = createDataPartition(data$HL, p = 0.7, list = FALSE)
+trainData = data[split, ]
+testData = data[-split, ]
+
+control <- trainControl(method = "cv", number = 10)
+tree_model <- train(HL ~ ., 
+                    data = trainData,
+                    method = "rpart",
+                    trControl = control)
+tree_model
+
+cart.trained = rpart(HL ~ ., data = trainData)
+prune.cart.trained = prune(cart.trained, cp = 0.02040816)
+
+
+predictions_prob = predict(prune.cart.trained, newdata = testData, type = "prob")[,2]
+predictions_class = predict(prune.cart.trained, newdata = testData, type = "class")
+library(pROC)
+roc_dt <- roc(testData$HL, predictions_prob)
+roc_dt
+######Fig. S5D
+windows()
+plot.roc(testData$HL, predictions_prob,percent=TRUE,col="#1c61b6",print.auc=TRUE,
+         main = "Area under the curve for DT")
+
+confusionMatrix(predictions_class, testData$HL,positive = "yes")
+confusionMatrix(predictions_class, testData$HL,positive = "yes")$byClass
+
+######Fig. S6D
+library(PRROC)
+true_labels = testData$HL
+pr <- pr.curve(scores.class0 = predictions_class[true_labels == "yes"],  
+               scores.class1 = predictions_class[true_labels == "no"],  
+               curve = TRUE)
+pr
+pr_auc = pr$auc.integral
+windows()
+plot(pr, 
+     main = paste("PR Curve for DT (PR-AUC =", round(pr_auc,2), ")"),
+     xlab = "Recall", 
+     ylab = "Precision", 
+     col = "#1c61b6", 
+     lwd = 2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
