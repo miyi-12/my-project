@@ -1,0 +1,70 @@
+##REF feature selection
+
+library(readxl)
+library(dplyr)
+library(caret)
+data = read_excel("imputed_data.xlsx")
+data = select(data,-X)
+
+quantitative_columns = c("age","PIR","BMI","Total_energy",
+                          "VitaminA","VitaminE","VitaminC","VitaminB12","Calcium_intake","Magnesium_intake",
+                          "AS","URXUBA","URXUCO","URXUCS","URXUMO","URXUSB","URXUTL","URXUTU","LBXBCD","LBXBPB","LBXTHG")
+data[quantitative_columns] = scale(data[quantitative_columns])
+varsToFactor = c("gender","military","race","education","hypertention",
+                  "Hyperlipidemia","Alcohol_user","Noise_exposure","Hear_protection",
+                  "Diabetes","Smoker")
+data[varsToFactor] = lapply(data[varsToFactor], factor)
+data$HL = as.factor(data$HL)
+
+split <- createDataPartition(data$HL, p = 0.7, list = FALSE)
+trainData <- data[split, ]
+testData <- data[-split, ]
+
+
+sizes = c(1,5,10,15,20,25,30,32)
+control = rfeControl(
+  functions = rfFuncs,  
+  method = "cv",         
+  number = 10            
+)
+
+set.seed(123)
+rfe_results = rfe(
+  x = trainData[, -ncol(trainData)], 
+  y = trainData$HL,
+  sizes = sizes,
+  rfeControl = control
+)
+
+print(rfe_results)
+selected_features = predictors(rfe_results)
+print(selected_features)
+results_df = rfe_results$results
+results_df
+library(ggplot2)
+library(ggthemes)
+
+# Fig. 2
+windows()
+ggplot(results_df, aes(x = Variables, y = Accuracy, size = AccuracySD, color = Kappa)) +
+  geom_point(alpha = 0.6) + 
+  scale_color_gradient(low = "lightblue", high = "darkblue") +  
+  scale_size(range = c(3, 15)) +  
+  labs(title = "Recursive Feature Elimination Results",
+       x = "Number of Features",
+       y = "Accuracy",
+       caption = "Bubble size indicates Accuracy SD; Color indicates Kappa") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16),
+    plot.caption = element_text(size = 12),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 15),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10)
+  )
+
+
+
+
+
