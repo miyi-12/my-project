@@ -1,0 +1,73 @@
+###Feedforward Neural Networks
+
+library(caret)
+library(rpart)
+library(caTools)
+library(dplyr)
+
+data = read.csv("ml_data.csv")
+varsToFactor = c("gender","race","hypertention",
+                 "Noise_exposure",
+                 "Diabetes")
+data[varsToFactor] = lapply(data[varsToFactor], factor)
+quantitative_columns = c("age","Total_energy","BMI",
+                         "VitaminA","VitaminE","Calcium_intake","Magnesium_intake",
+                         "blood_PB","urine_TL","urine_CS","urine_BA","urine_MO","urine_CO","urine_SB","urine_AS")
+data[quantitative_columns] = scale(data[quantitative_columns])
+data$HL = as.factor(data$HL)
+split = createDataPartition(data$HL, p = 0.7, list = FALSE)
+
+trainData = data[split, ]
+testData = data[-split, ]
+
+control = trainControl(method = "cv", number = 10)
+bpnn_model = train(HL ~ ., 
+                    data = trainData,
+                    method = "nnet",
+                    trControl = control)
+bpnn_model
+library(nnet)
+nnet_model= nnet(HL ~ ., data = trainData, size = 1, maxit = 500)
+nnet_model
+predictions_prob = predict(nnet_model, newdata = testData, type = "raw")
+predictions_class = predict(nnet_model, newdata = testData, type = "class")
+table(predictions_class)
+predictions_class = as.factor(predictions_class)
+
+
+library(pROC)
+roc_r = roc(testData$HL, predictions_prob)
+
+roc_r
+
+######Fig. S5G
+windows()
+plot.roc(testData$HL, predictions_prob,percent=TRUE,col="#1c61b6",print.auc=TRUE,
+         main = "Area under the curve for FNN")
+
+confusionMatrix(predictions_class, testData$HL,positive = "1")
+confusionMatrix(predictions_class, testData$HL,positive = "1")$byClass
+######Fig. S6G
+library(PRROC)
+
+true_labels = testData$HL
+pr = pr.curve(scores.class0 = predictions_class[true_labels == "1"],  
+               scores.class1 = predictions_class[true_labels == "0"],  
+               curve = TRUE)
+pr
+pr_auc = pr$auc.integral
+windows()
+plot(pr, 
+     main = paste("PR Curve for FNN (PR-AUC =", round(pr_auc,2), ")"),
+     xlab = "Recall", 
+     ylab = "Precision", 
+     col = "#1c61b6", 
+     lwd = 2)
+
+
+
+
+
+
+
+
