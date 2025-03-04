@@ -1,0 +1,75 @@
+##Random Forest
+
+library(caret)
+library(rpart)
+library(caTools)
+library(dplyr)
+
+data = read.csv("ml_data.csv")
+varsToFactor = c("gender","race","hypertention",
+                 "Noise_exposure",
+                 "Diabetes")
+data[varsToFactor] = lapply(data[varsToFactor], factor)
+quantitative_columns = c("age","Total_energy","BMI",
+                         "VitaminA","VitaminE","Calcium_intake","Magnesium_intake",
+                         "blood_PB","urine_TL","urine_CS","urine_BA","urine_MO","urine_CO","urine_SB","urine_AS")
+data[quantitative_columns] = scale(data[quantitative_columns])
+data$HL = ifelse(data$HL == 0,"no","yes")
+data$HL = as.factor(data$HL)
+split = createDataPartition(data$HL, p = 0.7, list = FALSE)
+trainData = data[split, ]
+testData = data[-split, ]
+
+library(randomForest)
+train_x = trainData[,-21]
+train_y = trainData[,21]
+
+rf_model1 = train(
+  HL~.,
+  data = trainData,
+  method = "rf",  
+  trControl = trainControl 
+)
+rf_model1
+
+rf_model2 = randomForest(x = train_x, y = train_y,
+                          mtry =2,
+                          ntree =53,
+                          nodesize=1,
+                          importance=TRUE,
+                          proximity=TRUE)
+
+predictions_prob = predict(rf_model2, newdata = testData, type = "prob")[,2]
+predictions_class = predict(rf_model2, newdata = testData, type = "class")
+library(pROC)
+roc_rf = roc(testData$HL, predictions_prob)
+roc_rf
+####Fig. S5C
+windows()
+plot.roc(testData$HL,predictions_prob,percent=TRUE,col="#1c61b6",print.auc=TRUE,
+         main = "Area under the curve for RF")
+
+confusionMatrix(predictions_class, testData$HL,positive = "yes")
+confusionMatrix(predictions_class, testData$HL,positive = "yes")$byClass
+
+####Fig. S6C
+library(PRROC)
+true_labels = testData$HL
+pr <- pr.curve(scores.class0 = predictions_class[true_labels == "yes"],  
+               scores.class1 = predictions_class[true_labels == "no"],  
+               curve = TRUE)
+pr
+pr_auc = pr$auc.integral
+windows()
+plot(pr, 
+     main = paste("PR Curve for RF (PR-AUC =", round(pr_auc,2), ")"),
+     xlab = "Recall", 
+     ylab = "Precision", 
+     col = "#1c61b6", 
+     lwd = 2)
+
+
+
+
+
+
